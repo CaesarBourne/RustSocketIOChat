@@ -1,34 +1,38 @@
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header};
-use serde::{Deserialize, Serialize};
+// auth.rs
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize)]
-struct Claims {
-    username: String,
-    exp: i64,
+pub struct Auth {
+    secret_key: String,
 }
 
-pub fn generate_token(username: &str) -> String {
-    let claims = Claims {
-        username: username.to_string(),
-        exp: 10000000000, // expires in 10 seconds
-    };
-    let token = encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret("secret_key".as_bytes()),
-    )
-    .unwrap();
-    token
-}
+impl Auth {
+    pub fn new(secret_key: String) -> Self {
+        Auth { secret_key }
+    }
 
-pub fn verify_token(token: &str) -> bool {
-    let token_data = decode::<Claims>(
-        &token,
-        &DecodingKey::from_secret("secret_key".as_bytes()),
-        &Validation::default(),
-    );
-    match token_data {
-        Ok(_) => true,
-        Err(_) => false,
+    pub fn generate_token(&self, user_id: &str) -> String {
+        let mut payload = HashMap::new();
+        payload.insert("user_id", user_id);
+        let token = encode(
+            &Header::default(),
+            &payload,
+            &EncodingKey::from_secret(self.secret_key.as_bytes()),
+        )
+        .unwrap();
+        token
+    }
+
+    pub fn verify_token(&self, token: &str) -> bool {
+        let validation = Validation::default();
+        let token_data = decode::<HashMap<String, String>>(
+            token,
+            &DecodingKey::from_secret(self.secret_key.as_bytes()),
+            &validation,
+        );
+        match token_data {
+            Ok(_) => true,
+            Err(_) => false,
+        }
     }
 }

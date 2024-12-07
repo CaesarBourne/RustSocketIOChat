@@ -53,6 +53,7 @@ impl ChatServer {
         for (client_id, client) in clients.iter() {
             if client_id != &sender_id {
                 let _ = client.send(Ok(Message::text(message)));
+                // println!("Broadcasting message to client {}: {}", client_id, message);
                 println!("Broadcasting message to client {}: {}", client_id, message);
             }
         }
